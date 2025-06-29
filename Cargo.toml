@@ -1,0 +1,10 @@
+[package]
+name = "low-samplerate-audio-classifier"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+burn = { version = "0.17.0", features = ["vision", "train", "wgpu"] }
+clap = { version = "4.5.37", features = ["derive"] }
+hound = "3.5.1"
+rustfft = "6.3.0"

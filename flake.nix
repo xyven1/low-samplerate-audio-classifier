@@ -26,23 +26,48 @@
       pkgs,
       system,
     }: {
-      default = pkgs.mkShell {
-        packages = with pkgs; [
-          (python3.withPackages (p:
-            with p; [
-              debugpy
-              numpy
-              matplotlib
-              torch-bin
-              librosa
-            ]))
-          (writeShellScriptBin "debugpy-adapter" ''
-            exec "python" -m debugpy.adapter "$@"
-          '')
-          basedpyright
-          ruff
-        ];
-      };
+      default = let
+        # libtorch-bin = pkgs.libtorch-bin.overrideAttrs (old: {
+        #   version = "2.6.0";
+        #   src = pkgs.fetchzip {
+        #     url = "https://download.pytorch.org/libtorch/cu126/libtorch-cxx11-abi-shared-with-deps-2.6.0%2bcu126.zip";
+        #     sha256 = "";
+        #   };
+        #   cudaSupport = true;
+        # });
+        # combined = pkgs.symlinkJoin {
+        #   name = "libtorch";
+        #   paths = [
+        #     libtorch-bin
+        #     libtorch-bin.dev
+        #   ];
+        # };
+      in
+        pkgs.mkShell {
+          packages = with pkgs; [
+            cargo
+            rustc
+            clippy
+            rust-analyzer
+            rustfmt
+            (writeShellScriptBin "lldb-dap" ''
+              ${pkgs.lib.getExe' pkgs.lldb "lldb-dap"} --pre-init-command  "command script import ${pkgs.fetchFromGitHub {
+                owner = "cmrschwarz";
+                repo = "rust-prettifier-for-lldb";
+                rev = "v0.4";
+                hash = "sha256-eje+Bs7kS87x9zCwH+7Tl1S/Bdv8dGkA0BoijOOdmeI=";
+              }}/rust_prettifier_for_lldb.py" $@
+            '')
+          ];
+          LD_LIBRARY_PATH = "${
+            pkgs.symlinkJoin {
+              name = "vulkan-deps";
+              paths = with pkgs; [
+                vulkan-loader
+              ];
+            }
+          }/lib";
+        };
     });
   };
 }
